@@ -67,11 +67,14 @@ def get_weighted_rarities(arr):
 # Generate a Deity NFT
 def generate_single_deity(filepaths, output_filename=None):
 
-    deity_clip = VideoFileClip(os.path.join("assets", filepaths[1]), True).set_position(
-        "center"
-    )
+    deity_clip = VideoFileClip(os.path.join("assets", filepaths[1]), True, False)
     duration = deity_clip.duration
-    bg_clip = ImageClip(os.path.join("assets", filepaths[0])).set_duration(duration)
+
+    if filepaths[0][-3:] == "mp4":
+        bg_clip = VideoFileClip(os.path.join("assets", filepaths[0]), True, False)
+    else:
+        bg_clip = ImageClip(os.path.join("assets", filepaths[0])).set_duration(duration)
+
     video = CompositeVideoClip([bg_clip, deity_clip])
 
     # Save the final image into desired location
@@ -87,7 +90,7 @@ def generate_single_deity(filepaths, output_filename=None):
 
 
 # Generate a single image with all possible traits
-# generate_single_deity(["Background/gradient_horizon-01.png", "Deity/00_ram_gold.mov"])
+# generate_single_deity(["REALM/Water_1.mp4", "DEITY/Black.mov"])
 
 
 # Get total number of distinct possible combinations
@@ -186,7 +189,7 @@ def generate_images(edition, count, drop_dup=True):
         # Remove duplicate images
         print("Removing %i images..." % (len(img_tb_removed)))
 
-        # op_path = os.path.join('output', 'edition ' + str(edition))
+        op_path = os.path.join("output", "edition " + str(edition))
         for i in img_tb_removed:
             os.remove(os.path.join(op_path, str(i).zfill(zfill_count) + ".mp4"))
 
@@ -229,4 +232,4 @@ def main(num_nfts, nft_name):
 
 
 # Run the main function
-main(5, "Deity")
+main(10, "Deity")
