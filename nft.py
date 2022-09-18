@@ -67,7 +67,9 @@ def get_weighted_rarities(arr):
 # Generate a Deity NFT
 def generate_single_deity(filepaths, output_filename=None):
 
-    deity_clip = VideoFileClip(os.path.join("assets", filepaths[1]), True, False)
+    deity_clip = VideoFileClip(
+        os.path.join("assets", filepaths[1]), True, False
+    ).set_position("center")
     duration = deity_clip.duration
 
     if filepaths[0][-3:] == "mp4":
@@ -79,7 +81,7 @@ def generate_single_deity(filepaths, output_filename=None):
 
     # Save the final image into desired location
     if output_filename is not None:
-        video.write_videofile(output_filename)
+        video.write_videofile(output_filename, codec="libx264", audio=False)
     else:
         # If output filename is not specified, use timestamp to name the image and save it in output/single_images
         if not os.path.exists(os.path.join("output", "single_images")):
@@ -90,7 +92,7 @@ def generate_single_deity(filepaths, output_filename=None):
 
 
 # Generate a single image with all possible traits
-# generate_single_deity(["REALM/Water_1.mp4", "DEITY/Black.mov"])
+# generate_single_deity(["REALM/Mountain_Grid_1.png", "DEITY/Black.mov"])
 
 
 # Get total number of distinct possible combinations
@@ -142,7 +144,7 @@ def generate_trait_set_from_config():
 
 
 # Generate the image set. Don't change drop_dup
-def generate_images(edition, count, drop_dup=True):
+def generate_images(edition, count):
 
     # Initialize an empty rarity table
     rarity_table = {}
@@ -179,31 +181,33 @@ def generate_images(edition, count, drop_dup=True):
                 rarity_table[CONFIG[idx]["name"]].append("none")
 
     # Create the final rarity table by removing duplicate creat
-    rarity_table = pd.DataFrame(rarity_table).drop_duplicates()
-    print("Generated %i images, %i are distinct" % (count, rarity_table.shape[0]))
+    rarity_table_pd = pd.DataFrame(rarity_table)
 
-    if drop_dup:
-        # Get list of duplicate images
-        img_tb_removed = sorted(list(set(range(count)) - set(rarity_table.index)))
+    return rarity_table_pd, zfill_count
 
-        # Remove duplicate images
-        print("Removing %i images..." % (len(img_tb_removed)))
 
-        op_path = os.path.join("output", "edition " + str(edition))
-        for i in img_tb_removed:
-            os.remove(os.path.join(op_path, str(i).zfill(zfill_count) + ".mp4"))
+def drop_duplicates(edition, count, zfill_count, rarity_table_no_dups):
+    # Get list of duplicate images
+    img_tb_removed = sorted(list(set(range(count)) - set(rarity_table_no_dups.index)))
 
-        # Rename images such that it is sequentialluy numbered
-        for idx, img in enumerate(sorted(os.listdir(op_path))):
-            os.rename(
-                os.path.join(op_path, img),
-                os.path.join(op_path, str(idx).zfill(zfill_count) + ".mp4"),
-            )
+    # Remove duplicate images
+    print("Removing %i images..." % (len(img_tb_removed)))
+
+    op_path = os.path.join("output", "edition " + str(edition), "images")
+    for i in img_tb_removed:
+        os.remove(os.path.join(op_path, str(i).zfill(zfill_count) + ".mp4"))
+
+    # Rename images such that it is sequentialluy numbered
+    for idx, img in enumerate(sorted(os.listdir(op_path))):
+        os.rename(
+            os.path.join(op_path, img),
+            os.path.join(op_path, str(idx).zfill(zfill_count) + ".mp4"),
+        )
 
     # Modify rarity table to reflect removals
-    rarity_table = rarity_table.reset_index()
-    rarity_table = rarity_table.drop("index", axis=1)
-    return rarity_table
+    rarity_table_no_dups = rarity_table_no_dups.reset_index()
+    rarity_table_no_dups = rarity_table_no_dups.drop("index", axis=1)
+    return rarity_table_no_dups
 
 
 # Main function. Point of entry
@@ -223,13 +227,35 @@ def main(num_nfts, nft_name):
             break
 
     print("Starting task...")
-    rt = generate_images(nft_name, num_nfts)
-
+    rarity_table, zfill_count = generate_images(nft_name, num_nfts)
     print("Saving metadata...")
-    rt.to_csv(os.path.join("output", "edition " + str(nft_name), "metadata.csv"))
+    rarity_table.to_csv(
+        os.path.join("output", "edition " + str(nft_name), "metadata.csv")
+    )
+
+    rarity_table_no_dups = rarity_table.drop_duplicates()
+    print(
+        "Generated %i images, %i are distinct"
+        % (num_nfts, rarity_table_no_dups.shape[0])
+    )
+
+    drop_duplicates(nft_name, num_nfts, zfill_count, rarity_table_no_dups)
+    rarity_table_no_dups.to_csv(
+        os.path.join("output", "edition " + str(nft_name), "metadata_no_dups.csv")
+    )
 
     print("Task complete!")
 
 
 # Run the main function
-main(10, "Deity")
+main(1250, "Deity-final")
+
+# Traceback (most recent call last):
+#   File "/Users/nathandrake/code/generation-script-nft/nft.py", line 237, in <module>
+#     main(1150, "Deity")
+#   File "/Users/nathandrake/code/generation-script-nft/nft.py", line 228, in main
+#     rt = generate_images(nft_name, num_nfts)
+#   File "/Users/nathandrake/code/generation-script-nft/nft.py", line 196, in generate_images
+#     os.remove(os.path.join(op_path, str(i).zfill(zfill_count) + ".mp4"))
+# FileNotFoundError: [Errno 2] No such file or directory: 'output/edition Deity/0061.mp4'
+# (generation-script-nft)
