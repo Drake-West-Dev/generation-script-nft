@@ -2,8 +2,6 @@
 # coding: utf-8
 
 import pandas as pd
-import numpy as np
-import time
 import os
 from progressbar import progressbar
 import json
@@ -15,12 +13,12 @@ warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 # Base metadata. MUST BE EDITED.
-BASE_IMAGE_URL = "ipfs://<-- Your CID Code-->"
-BASE_NAME = ""
+BASE_IMAGE_URL = "ipfs://bafybeifk4rj5a4eo4tcp5dobiwlnzwgvylf6h3ddp3jn3d2m22qadefnmy"
+BASE_NAME = "The Deity Collection"
 
 BASE_JSON = {
     "name": BASE_NAME,
-    "description": "",
+    "description": "The Deity Collection is 1000 digital representations of a sculpture made by HDL Corp in 2020. Twelve varieties of digital sculptures rotate slowly in various realms. The collection also includes five 1/1 collaborations with Ron English and five 1/1’s from HDL Corp.",
     "image": BASE_IMAGE_URL,
     "attributes": [],
 }
@@ -65,23 +63,17 @@ def get_attribute_metadata(metadata_path):
 
 
 # Main function that generates the JSON metadata
-def main():
+def main(edition_name):
 
-    # Get edition name
-    print("Enter edition you want to generate metadata for: ")
-    while True:
-        edition_name = input()
-        edition_path, metadata_path, json_path = generate_paths(edition_name)
+    edition_path, metadata_path, json_path = generate_paths(edition_name)
 
-        if os.path.exists(edition_path):
-            print("Edition exists! Generating JSON metadata...")
-            break
-        else:
-            print(
-                "Oops! Looks like this edition doesn't exist! Check your output folder to see what editions exist."
-            )
-            print("Enter edition you want to generate metadata for: ")
-            continue
+    if os.path.exists(edition_path):
+        print("Edition exists! Generating JSON metadata...")
+    else:
+        print(
+            "Oops! Looks like this edition doesn't exist! Check your output folder to see what editions exist."
+        )
+        return
 
     # Make json folder
     if not os.path.exists(json_path):
@@ -100,7 +92,7 @@ def main():
 
         # Append image PNG file name to base image path
         item_json["image"] = (
-            item_json["image"] + "/" + str(idx).zfill(zfill_count) + ".mp4"
+            item_json["image"] + "/0" + str(idx).zfill(zfill_count) + ".mp4"
         )
 
         # Convert pandas series to dictionary
@@ -111,7 +103,7 @@ def main():
 
             if attr_dict[attr] != "none":
                 item_json["attributes"].append(
-                    {"trait_type": attr, "value": attr_dict[attr]}
+                    {"trait_type": attr, "value": clean_attributes(attr_dict[attr])}
                 )
 
         # Write file to json folder
@@ -121,4 +113,4 @@ def main():
 
 
 # Run the main function
-main()
+main("Deity-final")

@@ -117,7 +117,7 @@ def select_index(cum_rarities, rand):
 
 
 # Generate a set of traits given rarities
-def generate_trait_set_from_config():
+def generate_unique_trait_set_from_config():
 
     trait_set = []
     trait_paths = []
@@ -168,7 +168,7 @@ def generate_images(edition, count):
         image_name = str(n).zfill(zfill_count) + ".mp4"
 
         # Get a random set of valid traits based on rarity weights
-        trait_sets, trait_paths = generate_trait_set_from_config()
+        trait_sets, trait_paths = generate_unique_trait_set_from_config()
 
         # Generate the actual image
         generate_single_deity(trait_paths, os.path.join(op_path, image_name))
@@ -248,7 +248,6 @@ def main(num_nfts, nft_name):
 
 
 # Run the main function
-main(1250, "Deity-full-run-2")
+# main(7, "Deity-last_7")
 
-rarity_csv_to_test = pd.read_csv("./output/edition Deity-test/metadata.csv")
-print(rarity_csv_to_test.drop_duplicates())
+trait_sets, trait_paths = generate_unique_trait_set_from_config()
